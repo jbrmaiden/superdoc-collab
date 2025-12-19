@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { Doc as YDoc, encodeStateAsUpdate } from 'yjs';
 import type { StorageFunction } from './storage-types.js';
 
 const { Pool } = pg;
@@ -8,6 +9,14 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
+
+// Create a blank Y.Doc with minimal DOCX structure that SuperDoc expects
+function createBlankDocxState(): Uint8Array {
+  const blankDoc = new YDoc();
+  const metaMap = blankDoc.getMap('meta');
+  metaMap.set('docx', []);
+  return encodeStateAsUpdate(blankDoc);
+}
 
 /**
  * Initialize database table for document storage
@@ -40,8 +49,8 @@ export const loadDocument: StorageFunction = async (id: string) => {
     );
 
     if (result.rows.length === 0) {
-      console.log(`Document ${id} not found, will create new`);
-      return null; // New document - Y.js will create empty state
+      console.log(`Document ${id} not found, creating blank DOCX structure`);
+      return createBlankDocxState(); // Return empty DOCX structure for SuperDoc
     }
 
     console.log(`Loaded document ${id} from database`);
