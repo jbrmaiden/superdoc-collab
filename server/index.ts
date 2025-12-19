@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { CollaborationBuilder, LoadFn, AutoSaveFn } from '@superdoc-dev/superdoc-yjs-collaboration';
 import { encodeStateAsUpdate, Doc as YDoc } from 'yjs';
 
-import { saveDocument, loadDocument } from './storage.js';
+import { saveDocument, loadDocument, initDatabase } from './storage.js';
 import { generateUser } from './userGenerator.js';
 
 const errorHandlers: Record<string, (error: Error, socket: any) => void> = {
@@ -26,8 +26,19 @@ const errorHandlers: Record<string, (error: Error, socket: any) => void> = {
   },
 };
 
-const fastify = Fastify({ logger: false });
-fastify.register(corsPlugin, { origin: true });
+const fastify = Fastify({ logger: true });
+
+// Configure CORS for frontend
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
+fastify.register(corsPlugin, {
+  origin: allowedOrigins,
+  credentials: true,
+});
 fastify.register(websocketPlugin);
 
 const SuperDocCollaboration = new CollaborationBuilder()
@@ -84,11 +95,20 @@ fastify.register(async function (fastify) {
 });
 
 /** Start the server */
-const port = parseInt(process.env.PORT || '3050');
-const host = '0.0.0.0'; // Listen on all interfaces for Cloud Run
-fastify.listen({ port, host }, (err: Error | null, address?: string): void => {
-  if (err) {
-    fastify.log.error(err);
+const start = async () => {
+  try {
+    // Initialize database before starting server
+    await initDatabase();
+
+    const port = parseInt(process.env.PORT || '3050');
+    const host = '0.0.0.0';
+
+    await fastify.listen({ port, host });
+    console.log(`Server running on http://${host}:${port}`);
+  } catch (err) {
+    console.error('Failed to start server:', err);
     process.exit(1);
   }
-});
+};
+
+start();

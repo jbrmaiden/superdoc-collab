@@ -1,5 +1,5 @@
 {
-  "name": "fastify-esm-example",
+  "name": "superdoc-collab-server",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -15,12 +15,14 @@
     "@superdoc-dev/superdoc-yjs-collaboration": "^1.0.2",
     "dotenv": "^17.2.3",
     "fastify": "^5.6.2",
+    "pg": "^8.13.1",
     "y-protocols": "^1.0.6",
     "y-websocket": "^3.0.0",
     "yjs": "13.6.19"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
+    "@types/pg": "^8.11.10",
     "@types/ws": "^8.18.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
