@@ -84,9 +84,22 @@ fastify.get('/user', async (request, reply) => {
 /** An example route for websocket collaboration connection */
 fastify.register(async function (fastify) {
   fastify.get('/doc/:documentId', { websocket: true }, async (socket, request) => {
+    const documentId = (request.params as any).documentId;
+    console.log(`WebSocket connection attempt for document: ${documentId}`);
+
+    socket.on('error', (err) => {
+      console.error(`WebSocket error for ${documentId}:`, err);
+    });
+
+    socket.on('close', (code, reason) => {
+      console.log(`WebSocket closed for ${documentId}: code=${code}, reason=${reason?.toString() || 'none'}`);
+    });
+
     try {
       await SuperDocCollaboration.welcome(socket as any, request as any);
+      console.log(`WebSocket welcome completed for ${documentId}`);
     } catch (error) {
+      console.error(`WebSocket welcome failed for ${documentId}:`, error);
       const err = error as Error;
       const errorHandler = errorHandlers[err.name] || errorHandlers.default;
       errorHandler(err, socket);
